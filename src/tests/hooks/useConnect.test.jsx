@@ -13,18 +13,11 @@ import {
     eevee,
     pikachu
 } from '../fixtures/pokeapi'
+import { mockPages, mockApiFailure } from '../fixtures/apiMock'
 
 vi.mock('axios', () => ({
     default: { get: vi.fn() }
 }))
-
-function mockPages(pages) {
-    axios.get.mockImplementation(url => (
-        url in pages
-            ? Promise.resolve({ data: pages[url]() })
-            : Promise.reject(new Error(`unexpected request to ${url}`))
-    ))
-}
 
 function read(result) {
     const [data, loading, error, handleNext, handlePrev, handleType] = result.current
@@ -53,7 +46,7 @@ describe('useConnect', () => {
     })
 
     it('exposes the error when the request fails', async () => {
-        axios.get.mockRejectedValue(new Error('Network Error'))
+        mockApiFailure()
         const { result } = renderHook(() => useConnect())
 
         await waitFor(() => expect(read(result).loading).toBe(false))

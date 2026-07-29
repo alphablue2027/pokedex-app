@@ -1,23 +1,17 @@
-import { render } from "@testing-library/react";
-import { describe, expect, test } from "vitest";
-import Pokemon from "../../components/list/Pokemon";
+import { render, screen } from '@testing-library/react'
+import { describe, expect, it } from 'vitest'
+import Pokemon from '../../components/list/Pokemon'
+import { pikachu } from '../fixtures/pokeapi'
 
-describe('Pokemon Component Testing', () => {
-    test('Props Test', () => {
-        const props = {
-            name: 'Charmander', 
-            url: 'https://2/'
-        }
+describe('Pokemon', () => {
+    it('derives the id and the sprite url from the api url', () => {
+        render(<Pokemon {...pikachu} />)
 
-        const component = render(<Pokemon {...props} />).container
-        
-        const id = component.querySelector('.pokemon__number')
-        expect(id).toHaveTextContent(props.url.split('/')[2])
-
-        const name = component.querySelector('.pokemon__name')
-        expect(name).toHaveTextContent(props.name)
-
-        const img = component.querySelector('.pokemon__img')
-        expect(img).toHaveAttribute('src', `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${id.textContent}.png`)
+        expect(screen.getByRole('heading', { name: '25' })).toBeInTheDocument()
+        expect(screen.getByRole('heading', { name: 'pikachu' })).toBeInTheDocument()
+        expect(screen.getByRole('img', { name: 'pokemon img' })).toHaveAttribute(
+            'src',
+            'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/25.png'
+        )
     })
 })
