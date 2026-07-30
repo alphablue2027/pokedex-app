@@ -1,5 +1,3 @@
-import PropTypes from "prop-types"
-
 function Pokemon({ name, url }) {
     const urlItems = url.split('/')
     const id = urlItems[urlItems.length - 2]
@@ -12,11 +10,6 @@ function Pokemon({ name, url }) {
             <h2 className="pokemon__name">{name}</h2>
         </li>
     )
-}
-
-Pokemon.propTypes = {
-    name: PropTypes.string.isRequired,
-    url: PropTypes.string.isRequired
 }
 
 export default Pokemon
