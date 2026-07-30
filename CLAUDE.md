@@ -4,68 +4,64 @@ Convenciones propias de este repo. Lo que aplica a todos los proyectos vive en `
 
 ## El proyecto
 
-Vite + React 19, JavaScript (sin TypeScript), sin router. Consume la PokeAPI vía axios y cachea cada respuesta en `localStorage`. Deploy a GitHub Pages con `npm run deploy` (`gh-pages -d dist`); por eso `vite.config.js` tiene `base: '/pokedex/'`. `dist/` está en `.gitignore` y no se versiona.
+Vite + React 19, JavaScript (sin TypeScript, sin propTypes). Sin router. Consume la PokeAPI vía axios y cachea cada respuesta en `localStorage` por URL completa, sin TTL/invalidación. Deploy a GitHub Pages con `npm run deploy` (`gh-pages -d dist`); por eso `vite.config.js` tiene `base: '/pokedex/'`. `dist/` está en `.gitignore`.
 
 Estado y features viven en `README.md` — puede estar desactualizado, verificar contra el código.
 
-## Módulo de tests
+## Tests
 
-Vitest 3 + Testing Library + jsdom. **26 tests en 5 archivos, 96.62% de statements, sin acceso a red.**
+Vitest 3 + Testing Library + jsdom. 23 tests en 5 archivos, sin acceso a red.
 
 ```
 src/tests/
-  setup.js                    cleanups automáticos para toda la suite
-  fixtures/pokeapi.js         datos y URLs — fuente única de verdad
-  fixtures/apiMock.js         mockPages() y mockApiFailure()
-  components/PokeApp.test.jsx  integración: las 4 ramas + interacción real
-  components/Pokemon.test.jsx  derivación del id desde la url
+  setup.js                     cleanups automáticos para toda la suite
+  fixtures/pokeapi.js          datos y URLs — fuente única de verdad
+  fixtures/apiMock.js          mockPages() y mockApiFailure()
+  components/PokeApp.test.jsx   integración: las 4 ramas + interacción real
+  components/Pokemon.test.jsx   derivación del id desde la url
   helpers/load.test.js
   hooks/useConnect.test.jsx
   hooks/useStatus.test.jsx
 ```
 
-### Decisiones tomadas — no volver a preguntar
+**Decisiones fijas — no volver a preguntar:**
+- Tests en `src/tests/` espejando `src/`, no junto al código.
+- Config de Vitest en `vite.config.js` (`defineConfig` de `vitest/config`), no `vitest.config.js` aparte.
+- Nombres estilo Vitest: `describe('useConnect')` + `it('comportamiento en minúscula')`, no `describe('Hook Testing')` + `test('Default Return Test')`.
+- Solo se testea lo crítico: markup estático, mapeos simples y wrappers de una línea quedan cubiertos por el test de integración. Sin snapshots.
+- `load.test.js` no repite lo que ya cubre `useConnect.test.jsx` (integra `load` real contra el mismo mock de axios). Se limita a lo que solo se observa aislado: cacheo en `localStorage` y que el cache evita refetch.
 
-- **Los tests van en `src/tests/`**, espejando la estructura de `src/`. No colocados junto al código. Confirmado 2026-07-28.
-- **La config de Vitest va en `vite.config.js`**, en un solo archivo, con `defineConfig` importado de `vitest/config` (superset del de Vite, conoce la clave `test`). Nada de `vitest.config.js` aparte. Confirmado 2026-07-28.
-- **Nombres según la convención de Vitest**: `describe` con el nombre real del módulo, `it` con el comportamiento en minúscula como frase. `describe('useConnect')` + `it('ignores handleNext on the last page')`, no `describe('UseConnect Hook Testing')` + `test('Default Return Test')`. Confirmado 2026-07-28.
-- **Solo se testea lo crítico.** Markup estático, componentes que solo mapean y wrappers de una línea no llevan test propio: quedan cubiertos por el test de integración. Sin snapshots.
+**Gotchas no obvios del setup:**
+- `globals: false` → importar `describe/it/expect/vi` en cada archivo; Testing Library no auto-registra cleanup, `setup.js` lo llama a mano.
+- `restoreMocks: true` → cada test arma su propio escenario, sin default compartido.
+- `setup.js` también limpia `localStorage` (jsdom no lo hace solo; sin eso un test lee el cache del anterior).
+- Mock de axios con factory explícita (`vi.mock('axios', () => ({ default: { get: vi.fn() } }))`), no automock.
+- Fixtures de páginas son funciones, no objetos: `load` muta `data.results` in place, un objeto compartido a nivel módulo se corrompería entre tests.
+- Queries por rol (`screen.getByRole`), nunca `container.querySelector`. `toHaveClass` está bien cuando la clase es el contrato del componente y ya se encontró por rol.
+- `userEvent` (con `await` y `.setup()` antes del render), no `fireEvent`.
 
-### Cómo están armados los tests
+**Antes de dar un test por bueno:** romper a propósito la línea de producción que dice cubrir y confirmar que se pone rojo. La cobertura mide qué se ejecutó, no qué se verificó — el test viejo de `useConnect` tenía un `waitFor` sin `await`, pasaba en verde sin ejecutar ninguna aserción real.
 
-- **`globals: false`** → hay que importar `describe`, `it`, `expect` y `vi` de `vitest` en cada archivo. Ojo: con globals apagado, Testing Library **no** registra su auto-cleanup, por eso `setup.js` llama a `cleanup()` a mano.
-- **`restoreMocks: true`** → cada test configura su propio escenario. No hay `beforeEach` compartido con una respuesta por defecto, y los contadores de llamadas arrancan en cero en cada test.
-- **`setup.js` limpia `localStorage`** además de desmontar. `load.js` cachea por URL y jsdom no lo limpia solo; sin eso, un test lee del caché del anterior y `axios.get` no se llama.
-- **Mock de axios con factory explícita**, no automock: `vi.mock('axios', () => ({ default: { get: vi.fn() } }))`. Declara la superficie real que usa la app y falla ruidosamente si alguien usa otro método.
-- **Las páginas de las fixtures son funciones, no objetos.** `load` hace `data.results = data.results.filter(...)`, o sea muta lo que recibe. Con objetos compartidos a nivel módulo, un test con búsqueda truncaría la página para todos los tests siguientes del archivo.
-- **Queries por rol con `screen`** (`getByRole('button', { name: 'Next Page' })`), nunca `container.querySelector('.clase')`. Afirmar sobre una clase (`toHaveClass`) sí está bien cuando esa clase es el contrato del componente y el elemento se encontró por rol.
-- **`userEvent`, no `fireEvent`.** Siempre `await`, y `userEvent.setup()` antes del `render`.
-
-### Antes de dar un test por bueno
-
-**Rompé a propósito la línea de producción que decís cubrir y confirmá que se pone rojo** — el test correcto y solo ese. El test viejo de `useConnect` tenía un `waitFor` sin `await`: nunca ejecutaba una aserción y pasaba en verde, con el hook marcando 52% de cobertura.
-
-La cobertura mide qué se ejecutó, no qué se verificó. Es piso para detectar agujeros, no meta a maximizar.
-
-### Sin cobertura a propósito
-
-- `App.jsx` — wrapper de una línea.
-- `useStatus.jsx:34`, el `default: return state` del reducer — rama defensiva; si se rompiera, ningún usuario lo notaría.
+**Sin cobertura a propósito:** `App.jsx` (wrapper de una línea), `useStatus.jsx:34` (`default: return state`, rama defensiva que nadie notaría si se rompiera).
 
 ## Pendiente
 
-**CI (en pausa).** Ordnay está estudiando GitHub Actions de la doc oficial antes de encararlo. Cuando se retome:
+- **CI (en pausa).** Ordnay está estudiando GitHub Actions antes de encararlo. Cuando se retome: instalar `@vitest/coverage-v8` (el bloque `coverage` de `vite.config.js` ya existe, falta el provider), agregar scripts `test:run`/`test:coverage` (`npm test` corre en watch mode y cuelga CI), workflow con `npm ci` + lint + tests.
 
-- Instalar `@vitest/coverage-v8` como devDependency (el bloque `coverage` ya está configurado en `vite.config.js`, pero el provider no está instalado).
-- Agregar scripts `test:run` (`vitest run`) y `test:coverage`. **`npm test` corre en modo watch y en CI se cuelga esperando cambios.**
-- Workflow en `.github/workflows` con `npm ci` + lint + tests.
+- **Búsqueda: fetch y render de dataset completo sin paginar.** La PokeAPI no tiene endpoint de búsqueda por texto — `useConnect.jsx` lo resuelve pidiendo la lista completa (`limit=100000`) y filtrando client-side. El resultado filtrado se renderiza entero en un `<ul>` sin paginar (`PokeList.jsx`), y cada tecla re-parsea/re-filtra ese JSON completo desde `localStorage`. Decisión tomada: virtualizar con **`@tanstack/react-virtual`** (headless, se acopla al layout flex-wrap actual sin forzar grid de columnas fijas; sucesor activo de `react-window`/`react-virtualized`, ambas en mantenimiento o abandonadas). Falta implementar.
 
-## Decisiones abiertas — preguntar antes de actuar
+- **Accesibilidad general** — encarar junto con lo anterior:
+  - `aria-label` en el input de `Search.jsx` (hoy sin nombre accesible).
+  - `alt` descriptivo por pokemon en `Pokemon.jsx` (hoy `alt="pokemon img"` genérico).
+  - `aria-live`/`role="alert"` en loading (`FakeList`), error (`Error.jsx`) y sin resultados (`Unknown.jsx`) — hoy no se anuncian a lectores de pantalla.
+  - `disabled` real en `Button.jsx` (hoy solo pinta con la clase `inactive`; el guard real está en `useConnect`, no en el botón — sigue siendo clickeable/tabulable).
+  - Orden de headings en `Pokemon.jsx`: hoy `h3` (número) antes que `h2` (nombre), invierte la jerarquía.
+  - `loading="lazy"` en las imágenes de `Pokemon.jsx`.
 
-- **`propTypes` es dead code.** React 19 eliminó la validación de `propTypes`, así que todos los bloques del proyecto se ignoran en silencio y `prop-types` es una dependencia inerte (verificado: renderizar `<Button />` sin sus props `isRequired` no emite ningún warning). Sin propTypes activos ni TypeScript, los tests son la única red de contención. Opciones planteadas y sin resolver: sacarlos, dejarlos anotados como deuda, o migrar a TypeScript.
-- **`aria-label` en el input de búsqueda** (`Search.jsx`). Hoy no tiene nombre accesible: se puede consultar con `getByRole('textbox')` pero no por nombre. Es un hueco real de a11y y un cambio de una línea, pero es código de producción.
+## Decisiones fijas — no volver a preguntar (proyecto en general)
+
+- **Sin `propTypes`.** React 19 eliminó su validación (verificado: `<Button />` sin sus props `isRequired` no emitía warning), así que era una dependencia inerte. Se sacó de todos los componentes y de `package.json`. Sin TypeScript tampoco, los tests son la única red de contención de tipos.
 
 ## Bugs detectados y no corregidos
 
-- **`PokeHeader.jsx:8`** — el `src` del logo es `https://share.google/images/usZHFptpXyMCcNhWR`, que es un share link de Google, no una URL de imagen. El logo no carga en producción.
-- **Los botones de paginación no están realmente deshabilitados.** La clase `inactive` solo los pinta; siguen siendo clickeables y tabulables. Lo que evita navegar de más es la guarda dentro de `useConnect`, no el botón. `disabled={!enabled}` lo resolvería.
+- **`PokeHeader.jsx:8`** — el `src` del logo es un share link de Google (`https://share.google/images/...`), no una URL de imagen. No carga en producción.
