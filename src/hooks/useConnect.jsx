@@ -4,19 +4,19 @@ import load from "../helpers/load"
 
 function useConnect() {
     const [url, setUrl] = useState('https://pokeapi.co/api/v2/pokemon/')
-    const [{data, loading, error}, dispatch] = useStatus()
+    const [{ data, loading, error }, dispatch] = useStatus()
     const [search, setSearch] = useState('')
 
     useEffect(() => {
         let ignore = false
 
-        
+
         load(url, search)
-        .then(action => {
-            if(!ignore) {
-                dispatch(action)
-            }
-        })
+            .then(action => {
+                if (!ignore) {
+                    dispatch(action)
+                }
+            })
 
         return () => {
             ignore = true
@@ -24,22 +24,22 @@ function useConnect() {
     }, [url, search, dispatch])
 
     const handleNext = () => {
-        if(data?.next) {
+        if (data?.next) {
             setUrl(data.next)
             dispatch({ type: 'LOADING' })
         }
     }
 
     const handlePrev = () => {
-        if(data?.previous) {
+        if (data?.previous) {
             setUrl(data.previous)
             dispatch({ type: 'LOADING' })
         }
     }
 
     const handleType = (value) => {
-        if(data) {
-            if(value === '') {
+        if (data) {
+            if (value === '') {
                 setUrl('https://pokeapi.co/api/v2/pokemon/?offset=0&limit=20')
             }
             else {
