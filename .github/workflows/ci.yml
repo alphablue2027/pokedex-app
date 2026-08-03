@@ -1,0 +1,46 @@
+name: CI
+
+on:
+  push:
+    branches: [development]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run test:run
+
+  open-pr:
+    needs: test
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Abrir PR a main si no hay uno abierto
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          abiertos=$(gh pr list --base main --head development --state open --json number --jq 'length')
+          if [ "$abiertos" = "0" ]; then
+            gh pr create --base main --head development \
+              --title "development → main" \
+              --body "Lint y tests en verde en development."
+          else
+            echo "Ya hay un PR abierto de development a main; el push lo actualiza solo."
+          fi
