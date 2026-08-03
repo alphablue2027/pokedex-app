@@ -3,8 +3,8 @@
 Starter template to display Pokémon and filter them in a list.
 
 [![React](https://img.shields.io/badge/React_19.1.1-blue)](https://reactjs.org/)
-[![React Router DOM](https://img.shields.io/badge/Jest_DOM_6.9.1-darkred)](https://reactjs.org/)
-[![Axios](https://img.shields.io/badge/Axios_1.7.9-red)](https://developer.mozilla.org/en-US/docs/Web/JavaScript)
+[![Jest DOM](https://img.shields.io/badge/Jest_DOM_6.9.1-darkred)](https://testing-library.com/docs/ecosystem-jest-dom/)
+[![Axios](https://img.shields.io/badge/Axios_1.12.2-red)](https://axios-http.com/)
 [![JavaScript](https://img.shields.io/badge/JavaScript-yellow)](https://developer.mozilla.org/en-US/docs/Web/JavaScript)
 [![Vite](https://img.shields.io/badge/Vite_7.1.2-yellow)](https://vitejs.dev/)
 [![Vite](https://img.shields.io/badge/Vitest_3.2.4-darkgreen)](https://vitejs.dev/)
@@ -12,38 +12,37 @@ Starter template to display Pokémon and filter them in a list.
 
 ## Preview
 
-Live Link: [https://chrysalcore.github.io/pokedex/](https://chrysalcore.github.io/pokedex/)
+Live Link: [https://chrysalcore.github.io/pokedex-app/](https://chrysalcore.github.io/pokedex-app/)
 
 ## Project status
 
-This project is under development and is not finished. Many core features are implemented (listing, filtering, main components and partial tests), but improvements, test coverage and visual refinements are still pending.
-
-If you run it locally, be aware that some routes or components may be incomplete or in a "mock" state.
+This project is under development. Listing, pagination, search and the loading, error and empty states are implemented and covered by tests. Performance work on the search results list and visual refinements are still pending — see the roadmap below.
 
 ## Description
 
-`Pokedex Web App` is an application created to display Pokémon, enable filtering, and demonstrate componentization and state patterns in React. The code uses React with contexts and reducers, external API consumption, and unit/integration tests in progress.
+`Pokedex Web App` is an application created to display Pokémon, enable filtering, and demonstrate componentization and state patterns in React. The code uses custom hooks over `useState` and `useReducer`, external API consumption, and unit and integration tests.
 
 ## Main features
 
-- State management with `useReducer` and Context API.
-- REST API consumption to fetch Pokémon data.
+- State management with `useState` and `useReducer` in custom hooks.
+- REST API consumption to fetch Pokémon data, with responses cached in `localStorage`.
 - Reusable components and testing for hooks and components.
 - Responsive UI using CSS for different devices.
-- Animations and smooth scrolling for improved UX.
+- Accessible markup: labelled search input, live regions for loading/error/empty states, real `disabled` on pagination.
 
 ## Technologies used
 
 | Category | Technologies |
 | :--- | :--- |
 | Frontend & Language | React 19, JavaScript, Vite |
-| State Management | useState, useReducer, Context API |
+| State Management | useState, useReducer (custom hooks) |
 | HTTP Client | Axios |
 | Routing | No routing library included by default |
 | Testing | Vitest, Testing Library |
 | Style | CSS |
 | Tools | ESLint, Vitest |
 | Version Control | Git, GitHub |
+| CI/CD | GitHub Actions |
 | Deployment | GitHub Pages |
 
 ## Local installation and usage
@@ -52,16 +51,16 @@ Follow these steps to run the project on your machine.
 
 ### Prerequisites
 
-- `Node.js` (recommended 16+)
-- `npm` or `pnpm`
+- `Node.js` 22 (the version CI runs on)
+- `npm`
 
 ### Steps
 
 1. Clone the repository
 
     ```bash
-    git clone https://github.com/chrysalcore/pokedex.git
-    cd pokedex
+    git clone https://github.com/chrysalcore/pokedex-app.git
+    cd pokedex-app
     ```
 
 2. Install dependencies
@@ -78,20 +77,28 @@ Follow these steps to run the project on your machine.
 
 ### Run tests
 
-If tests are configured in the project, you can run them with:
-
 ```bash
-npm run test
-# or
-npm run vitest
+npm test              # watch mode
+npm run test:run      # single run, used by CI
+npm run test:coverage # single run with coverage report
 ```
+
+23 tests across 5 files, no network access.
+
+## CI/CD
+
+Two GitHub Actions workflows:
+
+- **CI** runs on every push to `development`: lint plus the full test suite. If it passes, it opens a pull request to `main`.
+- **Deploy** runs on every push to `main`: builds the project and publishes `dist/` to the `gh-pages` branch.
+
+`main` is protected: changes land through a pull request with the `test` check passing. Merging the PR is manual.
 
 ## Roadmap (pending)
 
-- Complete test coverage for hooks and components.
+- Virtualize the search results list (`@tanstack/react-virtual`); the full dataset is currently fetched and rendered unpaginated.
+- Manual accessibility testing with keyboard and screen reader.
 - Improve error handling and loading states.
-- Add pagination and performance optimizations.
-- Improve accessibility (a11y) and related tests.
 
 ## How to contribute
 
@@ -101,8 +108,8 @@ npm run vitest
 
 ## Known issues
 
-- Test coverage is incomplete for some hooks and components.
-- Some routes or data may be in "mock" mode until integration is complete.
+- The header logo in `PokeHeader.jsx` points to a Google share link instead of an image URL, so it does not load.
+- Search fetches the entire Pokémon list and filters client-side; the filtered result renders unpaginated, which is slow on broad queries.
 
 ## License
 
