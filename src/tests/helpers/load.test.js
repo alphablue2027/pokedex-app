@@ -1,24 +1,28 @@
-import { describe, expect, test } from "vitest";
+import { describe, expect, it, vi } from 'vitest'
+import axios from 'axios'
 import load from '../../helpers/load'
+import { INITIAL_URL, SEARCH_URL, firstPage, fullPage } from '../fixtures/pokeapi'
 
-describe.skip('Load Helper Testing', () => {
-    test('Success Return Test Without Search', async () => {
-        const action = await load('https://pokeapi.co/api/v2/pokemon/', '') 
+vi.mock('axios', () => ({
+    default: { get: vi.fn() }
+}))
 
-        expect(action.type).toBe('SUCCESS')
-        expect(action.payload.results.length > 0).toBe(true)
+describe('load', () => {
+    it('caches the unfiltered page in localStorage', async () => {
+        axios.get.mockResolvedValue({ data: fullPage() })
+
+        await load(SEARCH_URL, 'pika')
+
+        expect(JSON.parse(localStorage.getItem(SEARCH_URL))).toEqual(fullPage())
     })
 
-    test('Success Return Test With Search', async () => {
-        const action = await load('https://pokeapi.co/api/v2/pokemon/?offset=0&limit=100000', 'evee') 
+    it('reads from the cache instead of calling the api again', async () => {
+        axios.get.mockResolvedValue({ data: firstPage() })
 
-        expect(action.type).toBe('SUCCESS')
-        expect(action.payload.results.length > 0).toBe(true)
-    })
+        await load(INITIAL_URL, '')
+        const action = await load(INITIAL_URL, '')
 
-    test('Error Return Test', async () => {
-        const action = await load('https://pokeapi.co/api/v2/pokem/', '') 
-
-        expect(action.type).toBe('ERROR')
+        expect(axios.get).toHaveBeenCalledTimes(1)
+        expect(action.payload.results).toHaveLength(3)
     })
 })

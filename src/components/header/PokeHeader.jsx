@@ -1,4 +1,3 @@
-import PropTypes from 'prop-types'
 import '../../assets/styles/PokeHeader.css'
 
 function PokeHeader({ children }) {
@@ -11,10 +10,6 @@ function PokeHeader({ children }) {
             { children }
         </header>
     )
-}
-
-PokeHeader.propTypes = {
-    children: PropTypes.node
 }
 
 export default PokeHeader

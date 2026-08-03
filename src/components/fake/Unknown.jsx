@@ -1,10 +1,8 @@
-import PropTypes from "prop-types"
-
 function Unknown({ ref }) {
     const src = `https://img.pokemondb.net/sprites/ruby-sapphire/normal/unown-${ref.current.value[0]}.png`
     
     return (
-        <div className="unknown">
+        <div className="unknown" role="status" aria-live="polite">
             <img className="unknown__img" src={src} alt="letter icon" />
             <div className="unknown-text">
                 <h2 className="unknown__name">Pokemon not found</h2>
@@ -12,14 +10,6 @@ function Unknown({ ref }) {
             </div>
         </div>
     )
-}
-
-Unknown.propTypes = {
-    ref: PropTypes.exact({
-        current: PropTypes.exact({
-            value: PropTypes.string
-        })
-    }).isRequired
 }
 
 export default Unknown
