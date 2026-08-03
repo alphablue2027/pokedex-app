@@ -1,6 +1,6 @@
 function Button({ children, onClick, enabled }) {
     return (
-        <button className={`button ${!enabled? 'inactive' : ''}`} onClick={onClick} >{children}</button>
+        <button className={`button ${!enabled? 'inactive' : ''}`} onClick={onClick} disabled={!enabled} >{children}</button>
     )
 }
 

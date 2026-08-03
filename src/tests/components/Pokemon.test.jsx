@@ -9,7 +9,7 @@ describe('Pokemon', () => {
 
         expect(screen.getByRole('heading', { name: '25' })).toBeInTheDocument()
         expect(screen.getByRole('heading', { name: 'pikachu' })).toBeInTheDocument()
-        expect(screen.getByRole('img', { name: 'pokemon img' })).toHaveAttribute(
+        expect(screen.getByRole('img', { name: 'pikachu sprite' })).toHaveAttribute(
             'src',
             'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/25.png'
         )

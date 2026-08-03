@@ -5,9 +5,9 @@ function Pokemon({ name, url }) {
 
     return (
         <li className="pokemon">
-            <h3 className="pokemon__number">{id}</h3>
-            <img className="pokemon__img" src={src} alt="pokemon img" />
             <h2 className="pokemon__name">{name}</h2>
+            <img className="pokemon__img" src={src} alt={`${name} sprite`} loading="lazy" />
+            <h3 className="pokemon__number">{id}</h3>
         </li>
     )
 }

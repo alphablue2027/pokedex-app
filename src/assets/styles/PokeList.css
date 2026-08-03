@@ -24,12 +24,14 @@
     width: 90%;
     height: 8rem;
     z-index: 20;
+    order: 1;
 }
 
 .pokemon__name {
     font-size: 1.2rem;
     text-transform: capitalize;
     z-index: 15;
+    order: 2;
 }
 
 .pokemon__number {
