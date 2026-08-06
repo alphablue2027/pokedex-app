@@ -5,6 +5,11 @@
     gap: 1rem;
 }
 
+.title__img {
+    width: 4rem;
+    height: 4rem;
+}
+
 .title__text {
     color: #e84;
     font-size: 4rem;
