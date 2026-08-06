@@ -8,12 +8,12 @@ export default defineConfig({
   test: {
     globals: false,
     environment: 'jsdom',
-    setupFiles: './src/tests/setup.js',
+    setupFiles: './src/tests/vitest.setup.ts',
     restoreMocks: true,
     unstubGlobals: true,
     coverage: {
       include: ['src/**'],
-      exclude: ['src/tests/**', 'src/main.jsx']
+      exclude: ['src/tests/**', 'src/main.tsx', 'src/vite-env.d.ts']
     }
   }
 })
