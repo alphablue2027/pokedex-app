@@ -1,4 +1,4 @@
-import type { PokemonSummary, PokemonListResponse } from '../../helpers/load'
+import type { PokemonSummary, PokemonListResponse } from '../../types'
 
 const BASE_URL = 'https://pokeapi.co/api/v2/pokemon/'
 

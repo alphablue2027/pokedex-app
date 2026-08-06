@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react"
 import useStatus from "./useStatus"
 import load from "../helpers/load"
-import type { PokemonListResponse } from "../helpers/load"
+import type { PokemonListResponse } from "../types"
 
 type UseConnect = [
     PokemonListResponse | null,

@@ -1,7 +1,7 @@
 import axios from 'axios'
 import type { AxiosResponse } from 'axios'
 import { vi } from 'vitest'
-import type { PokemonListResponse } from '../../helpers/load'
+import type { PokemonListResponse } from '../../types'
 
 export function mockPages(pages: Record<string, () => PokemonListResponse>) {
     vi.mocked(axios.get).mockImplementation(url => (
