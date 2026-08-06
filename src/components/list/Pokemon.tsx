@@ -1,4 +1,6 @@
-function Pokemon({ name, url }) {
+import type { PokemonSummary } from '../../helpers/load'
+
+function Pokemon({ name, url }: PokemonSummary) {
     const urlItems = url.split('/')
     const id = urlItems[urlItems.length - 2]
     const src = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${id}.png`

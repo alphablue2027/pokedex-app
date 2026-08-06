@@ -46,3 +46,8 @@ ul {
   background-color: #e84c;
 }
 
+.button:disabled {
+  pointer-events: none;
+  transition: none;
+}
+

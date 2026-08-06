@@ -1,8 +1,18 @@
 import { useState, useEffect } from "react"
 import useStatus from "./useStatus"
 import load from "../helpers/load"
+import type { PokemonListResponse } from "../helpers/load"
 
-function useConnect() {
+type UseConnect = [
+    PokemonListResponse | null,
+    boolean,
+    Error | null,
+    () => void,
+    () => void,
+    (value: string) => void
+]
+
+function useConnect(): UseConnect {
     const [url, setUrl] = useState('https://pokeapi.co/api/v2/pokemon/')
     const [{ data, loading, error }, dispatch] = useStatus()
     const [search, setSearch] = useState('')
@@ -37,7 +47,7 @@ function useConnect() {
         }
     }
 
-    const handleType = (value) => {
+    const handleType = (value: string) => {
         if (data) {
             if (value === '') {
                 setUrl('https://pokeapi.co/api/v2/pokemon/?offset=0&limit=20')

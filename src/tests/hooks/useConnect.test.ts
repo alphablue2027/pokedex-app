@@ -19,12 +19,12 @@ vi.mock('axios', () => ({
     default: { get: vi.fn() }
 }))
 
-function read(result) {
+function read(result: { current: ReturnType<typeof useConnect> }) {
     const [data, loading, error, handleNext, handlePrev, handleType] = result.current
     return { data, loading, error, handleNext, handlePrev, handleType }
 }
 
-async function renderLoaded(pages) {
+async function renderLoaded(pages: Record<string, () => ReturnType<typeof firstPage>>) {
     mockPages(pages)
     const { result } = renderHook(() => useConnect())
     await waitFor(() => expect(read(result).loading).toBe(false))
@@ -41,7 +41,7 @@ describe('useConnect', () => {
 
         await waitFor(() => expect(read(result).loading).toBe(false))
 
-        expect(read(result).data.results).toHaveLength(3)
+        expect(read(result).data!.results).toHaveLength(3)
         expect(read(result).error).toBeNull()
     })
 
@@ -62,7 +62,7 @@ describe('useConnect', () => {
         await waitFor(() => expect(read(result).loading).toBe(false))
 
         expect(axios.get).toHaveBeenCalledWith(NEXT_URL)
-        expect(read(result).data.results).toEqual([eevee])
+        expect(read(result).data!.results).toEqual([eevee])
     })
 
     it('requests the previous page when handlePrev is called', async () => {
@@ -72,7 +72,7 @@ describe('useConnect', () => {
         await waitFor(() => expect(read(result).loading).toBe(false))
 
         expect(axios.get).toHaveBeenCalledWith(RESET_URL)
-        expect(read(result).data.results).toHaveLength(3)
+        expect(read(result).data!.results).toHaveLength(3)
     })
 
     it('ignores handleNext on the last page', async () => {
@@ -100,7 +100,7 @@ describe('useConnect', () => {
         await waitFor(() => expect(read(result).loading).toBe(false))
 
         expect(axios.get).toHaveBeenCalledWith(SEARCH_URL)
-        expect(read(result).data.results).toEqual([pikachu])
+        expect(read(result).data!.results).toEqual([pikachu])
     })
 
     it('matches the search term case-insensitively', async () => {
@@ -109,7 +109,7 @@ describe('useConnect', () => {
         act(() => read(result).handleType('PIKA'))
         await waitFor(() => expect(read(result).loading).toBe(false))
 
-        expect(read(result).data.results).toEqual([pikachu])
+        expect(read(result).data!.results).toEqual([pikachu])
     })
 
     it('goes back to the paged url when the search is cleared', async () => {
@@ -126,6 +126,6 @@ describe('useConnect', () => {
         await waitFor(() => expect(read(result).loading).toBe(false))
 
         expect(axios.get).toHaveBeenCalledWith(RESET_URL)
-        expect(read(result).data.results).toHaveLength(3)
+        expect(read(result).data!.results).toHaveLength(3)
     })
 })

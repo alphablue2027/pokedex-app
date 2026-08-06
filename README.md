@@ -5,14 +5,14 @@ Starter template to display Pokémon and filter them in a list.
 [![React](https://img.shields.io/badge/React_19.1.1-blue)](https://reactjs.org/)
 [![Jest DOM](https://img.shields.io/badge/Jest_DOM_6.9.1-darkred)](https://testing-library.com/docs/ecosystem-jest-dom/)
 [![Axios](https://img.shields.io/badge/Axios_1.12.2-red)](https://axios-http.com/)
-[![JavaScript](https://img.shields.io/badge/JavaScript-yellow)](https://developer.mozilla.org/en-US/docs/Web/JavaScript)
+[![TypeScript](https://img.shields.io/badge/TypeScript_6.0-blue)](https://www.typescriptlang.org/)
 [![Vite](https://img.shields.io/badge/Vite_7.1.2-yellow)](https://vitejs.dev/)
 [![Vite](https://img.shields.io/badge/Vitest_3.2.4-darkgreen)](https://vitejs.dev/)
 [![License](https://img.shields.io/badge/Polyform_Perimeter_License_1.0.0-red)](LICENSE)
 
 ## Preview
 
-Live Link: [https://chrysalcore.github.io/pokedex-app/](https://chrysalcore.github.io/pokedex-app/)
+Live Link: [https://alphablue2027.github.io/pokedex-app/](https://alphablue2027.github.io/pokedex-app/)
 
 ## Project status
 
@@ -34,7 +34,7 @@ This project is under development. Listing, pagination, search and the loading, 
 
 | Category | Technologies |
 | :--- | :--- |
-| Frontend & Language | React 19, JavaScript, Vite |
+| Frontend & Language | React 19, TypeScript, Vite |
 | State Management | useState, useReducer (custom hooks) |
 | HTTP Client | Axios |
 | Routing | No routing library included by default |
@@ -59,7 +59,7 @@ Follow these steps to run the project on your machine.
 1. Clone the repository
 
     ```bash
-    git clone https://github.com/chrysalcore/pokedex-app.git
+    git clone https://github.com/alphablue2027/pokedex-app.git
     cd pokedex-app
     ```
 
@@ -81,16 +81,17 @@ Follow these steps to run the project on your machine.
 npm test              # watch mode
 npm run test:run      # single run, used by CI
 npm run test:coverage # single run with coverage report
+npm run typecheck     # tsc -b, used by CI
 ```
 
-23 tests across 5 files, no network access.
+24 tests across 5 files, no network access.
 
 ## CI/CD
 
 Two GitHub Actions workflows:
 
-- **CI** runs on every push to `development`: lint plus the full test suite. If it passes, it opens a pull request to `main`.
-- **Deploy** runs on every push to `main`: builds the project and publishes `dist/` to the `gh-pages` branch.
+- **CI** runs on every push to `development`: type-check, lint and the full test suite. If it passes, it opens a pull request to `main`.
+- **Deploy** runs on every push to `main`: type-checks, builds the project and publishes `dist/` to the `gh-pages` branch.
 
 `main` is protected: changes land through a pull request with the `test` check passing. Merging the PR is manual.
 
@@ -108,7 +109,6 @@ Two GitHub Actions workflows:
 
 ## Known issues
 
-- The header logo in `PokeHeader.jsx` points to a Google share link instead of an image URL, so it does not load.
 - Search fetches the entire Pokémon list and filters client-side; the filtered result renders unpaginated, which is slow on broad queries.
 
 ## License
