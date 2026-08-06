@@ -1,6 +1,8 @@
-function Unknown({ ref }) {
-    const src = `https://img.pokemondb.net/sprites/ruby-sapphire/normal/unown-${ref.current.value[0]}.png`
-    
+import type { RefObject } from 'react'
+
+function Unknown({ ref }: { ref: RefObject<HTMLInputElement | null> }) {
+    const src = `https://img.pokemondb.net/sprites/ruby-sapphire/normal/unown-${ref.current!.value[0]}.png`
+
     return (
         <div className="unknown" role="status" aria-live="polite">
             <img className="unknown__img" src={src} alt="letter icon" />

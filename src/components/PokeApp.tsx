@@ -19,30 +19,31 @@ function PokeApp() {
         handlePrev,
         handleType
     ] = useConnect()
-    const searchRef = useRef(null)
+    const searchRef = useRef<HTMLInputElement>(null)
 
     return (
         <main className="main">
             <PokeHeader>
                 <Search onType={handleType} ref={searchRef} />
                 <Sliders>
-                    <Button onClick={handlePrev} enabled={data?.previous} >Previous Page</Button>
-                    <Button onClick={handleNext} enabled={data?.next} >Next Page</Button>
+                    <Button onClick={handlePrev} enabled={Boolean(data?.previous)} >Previous Page</Button>
+                    <Button onClick={handleNext} enabled={Boolean(data?.next)} >Next Page</Button>
                 </Sliders>
             </PokeHeader>
             <hr />
             {error?
                 <ErrorRender />
                 :
-                loading? 
+                loading?
                     <FakeList />
                     :
-                    (data.results.length === 0)?
+                    // el reducer solo llega acá con data seteada: !loading && !error implica éxito
+                    (data!.results.length === 0)?
                         <Unknown ref={searchRef} />
                         :
-                        <PokeList data={data.results} />
+                        <PokeList data={data!.results} />
             }
-            
+
         </main>
     )
 }
