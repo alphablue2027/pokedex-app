@@ -2,7 +2,7 @@ import '../../assets/styles/FakeList.css'
 
 function FakeList() {
     return (
-        <ul className="fake-list" role="status" aria-live="polite" aria-label="Loading pokemon">
+        <ul className="fake-list" role="status" aria-live="polite" aria-label="Cargando pokemon">
             {new Array(20).fill(0).map((_item, id) => <FakeItem key={id} />)}
         </ul>
     )

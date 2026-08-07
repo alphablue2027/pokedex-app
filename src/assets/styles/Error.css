@@ -1,12 +1,23 @@
 .error {
-    /* align-self: center; */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+}
+
+.error__retry {
+    margin-top: 1rem;
+}
+
+.error-message {
     display: flex;
     flex-direction: column;
     align-items: center;
     padding: 1rem 3rem;
     color: #fff;
     text-align: center;
-    background-color: #e44;
+    background-color: #e448;
+    border: 1px solid #e44;
     border-radius: 0.5rem;
 }
 

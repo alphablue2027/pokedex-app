@@ -79,19 +79,19 @@ Follow these steps to run the project on your machine.
 
 ```bash
 npm test              # watch mode
-npm run test:run      # single run, used by CI
-npm run test:coverage # single run with coverage report
+npm run test:run      # single run
+npm run test:coverage # single run with coverage report, used by CI
 npm run typecheck     # tsc -b, used by CI
 ```
 
-24 tests across 5 files, no network access.
+31 tests across 5 files, no network access.
 
 ## CI/CD
 
 Two GitHub Actions workflows:
 
-- **CI** runs on every push to `development`: type-check, lint and the full test suite. If it passes, it opens a pull request to `main`.
-- **Deploy** runs on every push to `main`: type-checks, builds the project and publishes `dist/` to the `gh-pages` branch.
+- **CI** runs on every push to `development`: type-check, lint, the full test suite with coverage thresholds, and a production build. If it passes, it opens a pull request to `main`.
+- **Deploy** runs on every push to `main`: builds the project and publishes `dist/` to the `gh-pages` branch.
 
 `main` is protected: changes land through a pull request with the `test` check passing. Merging the PR is manual.
 
@@ -99,7 +99,6 @@ Two GitHub Actions workflows:
 
 - Virtualize the search results list (`@tanstack/react-virtual`); the full dataset is currently fetched and rendered unpaginated.
 - Manual accessibility testing with keyboard and screen reader.
-- Improve error handling and loading states.
 
 ## How to contribute
 

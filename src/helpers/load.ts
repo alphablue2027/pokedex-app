@@ -17,7 +17,11 @@ async function load(url: string, search: string): Promise<LoadResult> {
             data = response.data
         }
 
-        localStorage.setItem(url, JSON.stringify(data))
+        try {
+            localStorage.setItem(url, JSON.stringify(data))
+        } catch {
+            // el cacheo es una optimización, no una condición para el éxito del fetch
+        }
         data.results = data.results.filter(item => item.name.includes(search))
         return { type: 'SUCCESS', payload: data }
 

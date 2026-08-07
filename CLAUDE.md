@@ -8,9 +8,13 @@ Vite + React 19, TypeScript estricto (sin propTypes — dependencia inerte en Re
 
 **El repo en GitHub se llama `pokedex-app`, no `pokedex`.** El directorio local sigue diciendo `pokedex`. Por eso `vite.config.ts` tiene `base: '/pokedex-app/'`: Pages sirve en `https://alphablue2027.github.io/pokedex-app/`, y si el `base` no coincide con el nombre del repo los assets dan 404 y la página queda en blanco. Ya rompió producción una vez sin que nadie lo notara.
 
-**Repo transferido de `chrysalcore` (org) a `alphablue2027` (cuenta personal) el 2026-08-03** — es un proyecto de práctica sin relación de negocio, así que no vive bajo la marca. El ruleset de protección de `main` y el estado de GitHub Pages sobrevivieron la transferencia sin cambios; solo cambió el owner en las URLs (remote, clone, Pages). Ya no aplica la nota de que los permisos de Actions cuelgan de una política de organización.
+**Repo transferido de `chrysalcore` (org) a `alphablue2027` (cuenta personal) el 2026-08-03** — es un proyecto de práctica sin relación de negocio, así que no vive bajo la marca. El ruleset de protección de `main` y el estado de GitHub Pages sobrevivieron la transferencia sin cambios; solo cambió el owner en las URLs (remote, clone, Pages).
 
 Estado y features viven en `README.md` — puede estar desactualizado, verificar contra el código.
+
+**Corregido 2026-08-07 — dos bugs funcionales que salieron de una revisión de calidad, no de un reporte de usuario:**
+- La app quedaba muerta tras un error de red: `useConnect.ts` guardaba `handleType` detrás de `if (data)`, y en estado de error `data` es `null` para siempre — el buscador dejaba de responder y la única salida era recargar. Se sacó el guard y se agregó `handleRetry` (expuesto en la tupla de `useConnect`, botón "Reintentar" en `ErrorRender`) que fuerza un nuevo intento sin cambiar `url`/`search`, vía un `reloadKey` en las deps del effect.
+- `Comfortaa` (declarada en `index.css`) nunca se cargaba: no había `@font-face`, ni link a Google Fonts, ni `public/`. Se self-hosteó en `public/fonts/comfortaa-{400,700}.woff2` (subset `latin`, suficiente para español/inglés) con `@font-face` + `font-display: swap` en `index.css` — no un link a Google Fonts, que agrega un origen externo y un round-trip de bloqueo.
 
 ## TypeScript
 
@@ -18,7 +22,7 @@ Migración completa desde JS puro, `strict: true` desde el arranque (2026-08-05)
 
 **Decisiones fijas — no volver a preguntar:**
 - `.ts` vs `.tsx` según si el archivo tiene JSX, no según si "se siente" hook o componente — `useConnect.ts`/`useStatus.ts` son `.ts` (devuelven tuplas, sin JSX) aunque antes fueran `.jsx`.
-- Tipos reusados en `src/types/` (2026-08-06, alineado con `molino_rojo` — ver "Tipos compartidos" en `~/.claude/CLAUDE.md`): criterio es **reuso en 2+ archivos**, no "todo lo que sea dominio/estado". `domain.ts` tiene `PokemonSummary`/`PokemonListResponse` (usados en `load.ts`, `useConnect.ts`, `Pokemon.tsx`, `PokeList.tsx` y tests), re-exportado por el barrel `src/types/index.ts` — importar siempre desde `'../types'`. `Status`/`Action` del reducer se probaron centralizar y se revirtieron: solo se usan dentro de `useStatus.ts`, así que se quedan ahí (locales, sin exportar). Mismo criterio para `UseConnect` (la tupla de `useConnect.ts`): local al hook. (Antes esto decía "nada de carpeta `types/` de primer nivel, prohibido por convención general" — esa regla no tenía evidencia real y se corrigió tras verificar contra `molino_rojo`.)
+- Tipos reusados en `src/types/` (2026-08-06, alineado con `molino_rojo` — ver "Tipos compartidos" en `~/.claude/CLAUDE.md`): criterio es **reuso en 2+ archivos**, no "todo lo que sea dominio/estado". `domain.ts` tiene `PokemonSummary`/`PokemonListResponse` (usados en `load.ts`, `useConnect.ts`, `Pokemon.tsx`, `PokeList.tsx` y tests), re-exportado por el barrel `src/types/index.ts` — importar siempre desde `'../types'`. `Status`/`Action` del reducer se probaron centralizar y se revirtieron: solo se usan dentro de `useStatus.ts`, así que se quedan ahí (locales, sin exportar). Mismo criterio para `UseConnect` (la tupla de `useConnect.ts`): local al hook.
 - `npm run build` corre `tsc -b && vite build`: no se puede deployar con errores de tipos. `npm run typecheck` (`tsc -b`) corre también en CI, antes del lint, para bloquear el PR — no alcanza con que el build post-merge lo detecte tarde.
 - Mocks de axios en tests: `vi.mocked(axios.get)` para tipar `.mockImplementation`/`.mockResolvedValue`/`.mockRejectedValue`, nunca `as any`. `mockPages()` castea el `AxiosResponse` simulado (`{ data }` sin el resto de campos) porque el mock solo necesita `data` — cast puntual a una forma conocida, no un escape hatch genérico.
 
@@ -27,12 +31,13 @@ Migración completa desde JS puro, `strict: true` desde el arranque (2026-08-05)
 - `Button`: `enabled` recibía directo `data?.next` (un `string | null | undefined`, la URL de paginación) usado como si fuera boolean vía coerción implícita de JS. Ahora `enabled: boolean` en la prop, y los call sites en `PokeApp.tsx` pasan `Boolean(data?.next)` / `Boolean(data?.previous)` — mismo resultado observable, ahora explícito.
 
 **Aserciones no-nulas justificadas (invariantes reales, no atajos):**
-- `PokeApp.tsx`: `useConnect` devuelve `data`/`loading`/`error` como 3 posiciones independientes de una tupla (convención fija: "tuplas con labels, no objetos" — ver sección Estado en `~/.claude/CLAUDE.md`), así que TS no puede correlacionarlas aunque en runtime sí lo estén (el reducer de `useStatus.ts` sí modela la correlación completa con una unión discriminada de 3 miembros, pero esa garantía se pierde al aplanar la tupla). Después de descartar `error` y `loading`, queda `data!.results` con un comentario explicando el invariante.
-- `Unknown.tsx`: `ref.current!.value[0]` — `Unknown` solo se renderiza cuando el usuario ya escribió algo en el input (`data.results.length === 0`), así que `ref.current` nunca es null en ese punto, aunque el tipo de un `RefObject` sí lo permita.
+- `PokeApp.tsx`: `useConnect` devuelve `data`/`loading`/`error` como posiciones independientes de una tupla (convención fija: "tuplas con labels, no objetos" — ver sección Estado en `~/.claude/CLAUDE.md`), así que TS no puede correlacionarlas aunque en runtime sí lo estén (el reducer de `useStatus.ts` sí modela la correlación completa con una unión discriminada de 3 miembros, pero esa garantía se pierde al aplanar la tupla). Después de descartar `error` y `loading`, queda `data!.results` con un comentario explicando el invariante.
+
+**Bug real corregido tras revisión (no era visible sin probarlo):** `Unknown.tsx` leía `ref.current!.value[0]` — el valor crudo del input, sin el `.toLowerCase()` que `useConnect.handleType` sí aplica a su propio estado `search`. Buscar `"Zzz"` generaba `unown-Z.png` (404, el sprite real es `unown-z.png`) y buscar un término sin letras (`"99"`) generaba `unown-9.png` (404, no existe). Corregido pasando `search` (ya lowercaseado) como prop en vez de un `ref`, con fallback a `'a'` cuando el primer carácter no es `a-z`. Esto también eliminó el `ref` que atravesaba `PokeApp` → `Search`/`Unknown` solo para leer estado que ya vivía en el hook.
 
 ## Tests
 
-Vitest 3 + Testing Library + jsdom. 23 tests en 5 archivos, sin acceso a red.
+Vitest 3 + Testing Library + jsdom. 31 tests en 5 archivos, sin acceso a red.
 
 ```
 src/tests/
@@ -64,9 +69,16 @@ src/tests/
 - Queries por rol (`screen.getByRole`), nunca `container.querySelector`. `toHaveClass` está bien cuando la clase es el contrato del componente y ya se encontró por rol.
 - `userEvent` (con `await` y `.setup()` antes del render), no `fireEvent`.
 
-**Antes de dar un test por bueno:** romper a propósito la línea de producción que dice cubrir y confirmar que se pone rojo. La cobertura mide qué se ejecutó, no qué se verificó — el test viejo de `useConnect` tenía un `waitFor` sin `await`, pasaba en verde sin ejecutar ninguna aserción real.
+**Antes de dar un test por bueno:** romper a propósito la línea de producción que dice cubrir y confirmar que se pone rojo. La cobertura mide qué se ejecutó, no qué se verificó — el test viejo de `useConnect` tenía un `waitFor` sin `await`, pasaba en verde sin ejecutar ninguna aserción real. Aplicado también a los casos adversariales agregados en la revisión de 2026-08-07 (ver más abajo) — cada uno se confirmó en rojo contra la línea que dice cubrir antes de darlo por bueno.
 
-**Scripts:** `npm test` es watch mode (cuelga en CI), `npm run test:run` es la corrida única, `npm run test:coverage` agrega cobertura vía `@vitest/coverage-v8`. Hoy da 96% de statements. `coverage/` está en `.gitignore` y también en `globalIgnores` de ESLint (si no, lintea el HTML/JS generado del reporte). `npm run typecheck` (`tsc -b`) es aparte de todo esto — cobertura mide qué corrió, no reemplaza el chequeo de tipos.
+**Casos adversariales, no solo camino feliz (agregados 2026-08-07):** la suite original solo ejercía datos canónicos. Se sumaron los casos que habrían atrapado los bugs reales de esa revisión:
+- `useConnect.test.ts` → *"discards a stale response..."*: request desactualizado que resuelve después de uno más nuevo. Requiere `await act(async () => { resolve(...); await new Promise(r => setTimeout(r, 0)) })`, no un `act()` síncrono — el `dispatch` de una respuesta tardía ocurre fuera del callback síncrono de `act`, y sin el `await` adicional el test pasa en verde aunque el flag `ignore` esté roto (falso positivo confirmado al romperlo a propósito).
+- `useConnect.test.ts` → *"retries the same request..."*: cubre `handleRetry` y el `reloadKey` en las deps del effect.
+- `PokeApp.test.tsx` → *"resolves the unknown sprite from an uppercase..."* / *"falls back to a fixed unknown sprite..."*: mayúsculas y término sin letras en la búsqueda.
+- `PokeApp.test.tsx` → *"recovers after a failed request..."* / *"still responds to search after a failed request"*: cubre el retry y que `handleType` ya no depende de `data`.
+- `load.test.ts` → *"still succeeds when caching... exceeds the storage quota"*: `localStorage.setItem` fallando no debe convertir un fetch exitoso en error.
+
+**Scripts:** `npm test` es watch mode (cuelga en CI), `npm run test:run` es la corrida única, `npm run test:coverage` agrega cobertura vía `@vitest/coverage-v8` y corre con thresholds (`vite.config.ts`: 95% statements/lines, 90% branches/functions) — un PR que baja la cobertura por debajo de eso falla en CI, no solo se reporta. Hoy da 95.81% de statements. `coverage/` está en `.gitignore` y también en `globalIgnores` de ESLint (si no, lintea el HTML/JS generado del reporte). `npm run typecheck` (`tsc -b`) es aparte de todo esto — cobertura mide qué corrió, no reemplaza el chequeo de tipos.
 
 **Sin cobertura a propósito:** `App.tsx` (wrapper de una línea), `useStatus.ts` (`default: return state` del reducer, rama defensiva que nadie notaría si se rompiera).
 
@@ -74,8 +86,10 @@ src/tests/
 
 Dos workflows en `.github/workflows/`, separados porque disparan en eventos distintos:
 
-- **`ci.yml`** — push a `development` (o manual). Job `test`: `npm ci` + `npm run typecheck` + `npm run lint` + `npm run test:run`. Job `open-pr`: si `test` pasó y no hay PR abierto, abre `development → main` con `gh pr create`.
+- **`ci.yml`** — push a `development` (o manual). Job `test`: `npm ci` + `npm run typecheck` + `npm run lint` + `npm run test:coverage` (con thresholds, ver sección Tests) + `npm run build`. Job `open-pr`: si `test` pasó y no hay PR abierto, abre `development → main` con `gh pr create`. `concurrency: ci-${{ github.ref }}` con `cancel-in-progress: true` — dos pushes seguidos a `development` ya no compiten por abrir el mismo PR.
 - **`deploy.yml`** — push a `main` (o manual). `npm ci` + `npm run build` + publish de `dist/` a la rama `gh-pages` con `peaceiris/actions-gh-pages`. No repite tests: a `main` solo se llega vía el PR, que ya corrió en verde.
+
+**El build corre en `ci.yml` desde 2026-08-07.** Antes solo se ejecutaba post-merge en `deploy.yml`, así que una falla exclusiva de bundling (resolución de assets, el `base` path, un plugin) pasaba el PR en verde y rompía `main` recién en el deploy — que es justo lo que ya pasó una vez con el `base` path (ver nota de la sección "El proyecto"). Ahora ese tipo de falla se atrapa antes del merge.
 
 Node 22 en CI, para igualar el local. `main` tiene un ruleset "Main Protection" (`active`): PR obligatorio con **0 approvals**, required status check `test` pinneado a GitHub Actions, restrict deletions, block force pushes, sin "require up to date". Bypass: `OrganizationAdmin`, o sea que las reglas no atan a Ordnay.
 
@@ -96,14 +110,19 @@ Node 22 en CI, para igualar el local. `main` tiene un ruleset "Main Protection" 
 ## Pendiente
 
 - **Búsqueda: fetch y render de dataset completo sin paginar.** La PokeAPI no tiene endpoint de búsqueda por texto — `useConnect.ts` lo resuelve pidiendo la lista completa (`limit=100000`) y filtrando client-side. El resultado filtrado se renderiza entero en un `<ul>` sin paginar (`PokeList.tsx`), y cada tecla re-parsea/re-filtra ese JSON completo desde `localStorage`. Decisión tomada: virtualizar con **`@tanstack/react-virtual`** (headless, se acopla al layout flex-wrap actual sin forzar grid de columnas fijas; sucesor activo de `react-window`/`react-virtualized`, ambas en mantenimiento o abandonadas). Falta implementar.
+- **Cambio de diseño futuro: router + páginas reales, con Redux o Zustand para estado/contexto.** Hoy es una sola página sin router (ver "El proyecto" arriba). El plan es introducir un router y dividir la app en páginas, sumando Redux o Zustand para el estado que hoy vive en los hooks de `PokeApp` — todavía no decidido cuál de los dos. Se hará junto con la virtualización de arriba, después de aprender manejo de estado avanzado (**TanStack Query**, para el lado de fetching/cache de servidor — complementario a Redux/Zustand, que cubre estado de cliente). Sin fecha ni decisión de router específico todavía; anotado acá para no perder la intención.
 
 ## Accesibilidad — hecho
 
 `aria-label` en el input de `Search.tsx`; `alt` por pokemon y `loading="lazy"` en `Pokemon.tsx`; `role="status"`/`aria-live` en `FakeList` y `Unknown.tsx`, `role="alert"` en `Error.tsx`; `disabled` real en `Button.tsx` además de la clase `inactive`.
 
-**Ojo con `PokeList.css`:** en `Pokemon.tsx` el `h2` (nombre) va **antes** que el `img` y el `h3` (número) en el DOM, para que la jerarquía de headings no quede invertida. El orden *visual* de siempre (imagen arriba, nombre abajo) se mantiene con `order` en `.pokemon__img` / `.pokemon__name`. Si alguien reordena el JSX "para que coincida con lo que se ve", rompe la jerarquía otra vez.
+**Ojo con `PokeList.css`:** en `Pokemon.tsx` el `h2` (nombre) va **antes** que el `img` y el `span` (número) en el DOM, para que el orden de lectura no quede invertido. El orden *visual* de siempre (imagen arriba, nombre abajo) se mantiene con `order` en `.pokemon__img` / `.pokemon__name`. Si alguien reordena el JSX "para que coincida con lo que se ve", rompe el orden otra vez.
 
-Falta prueba manual con teclado y lector de pantalla: los scanners automáticos detectan entre un cuarto y un tercio de los problemas de WCAG.
+**Corregido 2026-08-07 — headings usados como tamaño de fuente, no como estructura.** El número de cada pokemon (`Pokemon.tsx`) y las descripciones de `Error.tsx`/`Unknown.tsx` eran `h3`. Con 20 pokemon en pantalla eso eran 41 headings navegables por lector de pantalla en vez de 21 — el número se anunciaba como si fuera un encabezado de sección. El número pasó a `<span>` (misma clase CSS, mismo estilo) y las descripciones a `<p>`. Si se agrega texto nuevo en estos componentes, no asumir que "se ve como título" implica `<hN>` — solo lo son el nombre del pokemon y los títulos de error/not-found.
+
+**Corregido 2026-08-07 — `lang="en"` con la UI en español.** `index.html` declaraba inglés mientras `Error.tsx` ya renderizaba texto en español; un lector de pantalla lo pronunciaba con fonética inglesa. Se unificó todo el texto visible a español (antes mezclaba: `Error.tsx` en español, `Unknown.tsx`/botones/`aria-label`s en inglés) y `lang="es"`. Si se agrega texto nuevo, va en español.
+
+Falta prueba manual con teclado y lector de pantalla: los scanners automáticos detectan entre un cuarto y un tercio de los problemas de WCAG. Esta ronda corrigió lo verificable por lectura de código y por test automatizado (roles, jerarquía, idioma) — no reemplaza esa prueba manual pendiente.
 
 ## Decisiones fijas — no volver a preguntar (proyecto en general)
 

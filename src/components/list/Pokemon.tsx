@@ -8,8 +8,8 @@ function Pokemon({ name, url }: PokemonSummary) {
     return (
         <li className="pokemon">
             <h2 className="pokemon__name">{name}</h2>
-            <img className="pokemon__img" src={src} alt={`${name} sprite`} loading="lazy" />
-            <h3 className="pokemon__number">{id}</h3>
+            <img className="pokemon__img" src={src} alt={`Sprite de ${name}`} loading="lazy" />
+            <span className="pokemon__number">{id}</span>
         </li>
     )
 }

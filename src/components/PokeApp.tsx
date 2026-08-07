@@ -8,38 +8,38 @@ import Sliders from './header/Sliders'
 import PokeList from './list/PokeList'
 
 import useConnect from "../hooks/useConnect"
-import { useRef } from "react"
 
 function PokeApp() {
     const [
         data,
         loading,
         error,
+        search,
         handleNext,
         handlePrev,
-        handleType
+        handleType,
+        handleRetry
     ] = useConnect()
-    const searchRef = useRef<HTMLInputElement>(null)
 
     return (
         <main className="main">
             <PokeHeader>
-                <Search onType={handleType} ref={searchRef} />
+                <Search onType={handleType} />
                 <Sliders>
-                    <Button onClick={handlePrev} enabled={Boolean(data?.previous)} >Previous Page</Button>
-                    <Button onClick={handleNext} enabled={Boolean(data?.next)} >Next Page</Button>
+                    <Button onClick={handlePrev} enabled={Boolean(data?.previous)} >Página anterior</Button>
+                    <Button onClick={handleNext} enabled={Boolean(data?.next)} >Página siguiente</Button>
                 </Sliders>
             </PokeHeader>
             <hr />
             {error?
-                <ErrorRender />
+                <ErrorRender onRetry={handleRetry} />
                 :
                 loading?
                     <FakeList />
                     :
                     // el reducer solo llega acá con data seteada: !loading && !error implica éxito
                     (data!.results.length === 0)?
-                        <Unknown ref={searchRef} />
+                        <Unknown search={search} />
                         :
                         <PokeList data={data!.results} />
             }
