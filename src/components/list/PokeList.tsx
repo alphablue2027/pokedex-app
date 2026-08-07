@@ -1,6 +1,6 @@
 import '../../assets/styles/PokeList.css'
 import Pokemon from './Pokemon'
-import type { PokemonSummary } from '../../helpers/load'
+import type { PokemonSummary } from '../../types'
 
 function PokeList({ data }: { data: PokemonSummary[] }) {
     return (

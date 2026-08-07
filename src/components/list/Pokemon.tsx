@@ -1,4 +1,4 @@
-import type { PokemonSummary } from '../../helpers/load'
+import type { PokemonSummary } from '../../types'
 
 function Pokemon({ name, url }: PokemonSummary) {
     const urlItems = url.split('/')

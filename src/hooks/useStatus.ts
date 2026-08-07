@@ -1,12 +1,12 @@
 import { useReducer, type Dispatch } from "react"
-import type { PokemonListResponse } from "../helpers/load"
+import type { PokemonListResponse } from "../types"
 
 type Status =
     | { loading: true; data: null; error: null }
     | { loading: false; data: PokemonListResponse; error: null }
     | { loading: false; data: null; error: Error }
 
-export type Action =
+type Action =
     | { type: 'LOADING' }
     | { type: 'SUCCESS'; payload: PokemonListResponse }
     | { type: 'ERROR'; payload: Error }
