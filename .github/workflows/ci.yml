@@ -9,6 +9,10 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   test:
     name: Typecheck, lint & test
@@ -30,7 +34,9 @@ jobs:
       - name: Lint
         run: npm run lint
       - name: Run tests
-        run: npm run test:run
+        run: npm run test:coverage
+      - name: Build
+        run: npm run build
 
   open-pr:
     name: Open PR to main

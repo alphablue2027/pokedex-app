@@ -13,7 +13,13 @@ export default defineConfig({
     unstubGlobals: true,
     coverage: {
       include: ['src/**'],
-      exclude: ['src/tests/**', 'src/main.tsx', 'src/vite-env.d.ts']
+      exclude: ['src/tests/**', 'src/main.tsx', 'src/vite-env.d.ts'],
+      thresholds: {
+        statements: 95,
+        branches: 90,
+        functions: 90,
+        lines: 95
+      }
     }
   }
 })
