@@ -1,8 +1,6 @@
-import type { Ref } from 'react'
-
-function Search({ onType, ref }: { onType: (value: string) => void; ref: Ref<HTMLInputElement> }) {
+function Search({ onType }: { onType: (value: string) => void }) {
     return (
-        <input ref={ref} className="searchbox" type="text" aria-label="Search pokemon" onChange={(e) => onType(e.target.value)} />
+        <input className="searchbox" type="text" aria-label="Buscar pokemon" onChange={(e) => onType(e.target.value)} />
     )
 }
 
