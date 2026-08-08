@@ -47,7 +47,7 @@ ul {
 
 .button {
   padding: 0.6em 1.2em;
-  width: 12rem;
+  width: min(12rem, 100%);
   color: #fff;
   font-size: 1rem;
   font-weight: 700;

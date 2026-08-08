@@ -7,7 +7,9 @@
 
 .title {
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
+    justify-content: center;
     gap: 1rem;
 }
 
@@ -18,7 +20,7 @@
 
 .title__text {
     color: #e84;
-    font-size: 4rem;
+    font-size: clamp(1.75rem, 9vw, 4rem);
 }
 
 .searchbox {
@@ -31,5 +33,7 @@
 
 .slider {
     display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
     gap: 1rem;
 }
