@@ -36,4 +36,16 @@ describe('load', () => {
         expect(action.payload).toBeInstanceOf(Error)
         expect(action.payload.message).toBe('network down')
     })
+
+    it('still succeeds when caching the response exceeds the storage quota', async () => {
+        vi.mocked(axios.get).mockResolvedValue({ data: firstPage() })
+        vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+            throw new DOMException('quota exceeded', 'QuotaExceededError')
+        })
+
+        const action = await load(INITIAL_URL, '')
+
+        if (action.type !== 'SUCCESS') throw new Error('expected SUCCESS')
+        expect(action.payload.results).toHaveLength(3)
+    })
 })

@@ -1,7 +1,9 @@
 import { act, renderHook, waitFor } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 import axios from 'axios'
+import type { AxiosResponse } from 'axios'
 import useConnect from '../../hooks/useConnect'
+import type { PokemonListResponse } from '../../types'
 import {
     INITIAL_URL,
     NEXT_URL,
@@ -20,8 +22,8 @@ vi.mock('axios', () => ({
 }))
 
 function read(result: { current: ReturnType<typeof useConnect> }) {
-    const [data, loading, error, handleNext, handlePrev, handleType] = result.current
-    return { data, loading, error, handleNext, handlePrev, handleType }
+    const [data, loading, error, search, handleNext, handlePrev, handleType, handleRetry] = result.current
+    return { data, loading, error, search, handleNext, handlePrev, handleType, handleRetry }
 }
 
 async function renderLoaded(pages: Record<string, () => ReturnType<typeof firstPage>>) {
@@ -53,6 +55,44 @@ describe('useConnect', () => {
 
         expect(read(result).error).toBeInstanceOf(Error)
         expect(read(result).data).toBeNull()
+    })
+
+    it('retries the same request when handleRetry is called after a failure', async () => {
+        mockApiFailure()
+        const { result } = renderHook(() => useConnect())
+        await waitFor(() => expect(read(result).loading).toBe(false))
+        expect(read(result).error).toBeInstanceOf(Error)
+
+        mockPages({ [INITIAL_URL]: firstPage })
+        act(() => read(result).handleRetry())
+
+        await waitFor(() => expect(read(result).loading).toBe(false))
+        expect(read(result).error).toBeNull()
+        expect(read(result).data!.results).toHaveLength(3)
+    })
+
+    it('discards a stale response that resolves after a newer request replaced it', async () => {
+        let resolveStale: (value: AxiosResponse<PokemonListResponse>) => void = () => {}
+        const staleResponse = new Promise<AxiosResponse<PokemonListResponse>>(resolve => {
+            resolveStale = resolve
+        })
+
+        vi.mocked(axios.get)
+            .mockImplementationOnce(() => staleResponse)
+            .mockImplementationOnce(() => Promise.resolve({ data: fullPage() } as AxiosResponse<PokemonListResponse>))
+
+        const { result } = renderHook(() => useConnect())
+
+        act(() => read(result).handleType('pika'))
+        await waitFor(() => expect(read(result).loading).toBe(false))
+        expect(read(result).data!.results).toEqual([pikachu])
+
+        await act(async () => {
+            resolveStale({ data: firstPage() } as AxiosResponse<PokemonListResponse>)
+            await new Promise(resolve => setTimeout(resolve, 0))
+        })
+
+        expect(read(result).data!.results).toEqual([pikachu])
     })
 
     it('requests the next page when handleNext is called', async () => {

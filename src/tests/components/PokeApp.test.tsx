@@ -56,20 +56,76 @@ describe('PokeApp', () => {
 
         await user.type(screen.getByRole('textbox'), 'zzz')
 
-        expect(await screen.findByRole('heading', { name: 'Pokemon not found' })).toBeInTheDocument()
-        expect(screen.getByRole('img', { name: 'letter icon' })).toHaveAttribute(
+        expect(await screen.findByRole('heading', { name: 'Pokémon no encontrado' })).toBeInTheDocument()
+        expect(screen.getByRole('img', { name: 'icono de letra' })).toHaveAttribute(
             'src',
             'https://img.pokemondb.net/sprites/ruby-sapphire/normal/unown-z.png'
         )
     })
 
-    it('loads the next page when the user clicks Next Page', async () => {
+    it('resolves the unknown sprite from an uppercase search term', async () => {
+        const user = userEvent.setup()
+        mockPages({ [INITIAL_URL]: firstPage, [SEARCH_URL]: fullPage })
+        render(<PokeApp />)
+        await screen.findByRole('heading', { name: 'bulbasaur' })
+
+        await user.type(screen.getByRole('textbox'), 'Zzz')
+
+        expect(await screen.findByRole('heading', { name: 'Pokémon no encontrado' })).toBeInTheDocument()
+        expect(screen.getByRole('img', { name: 'icono de letra' })).toHaveAttribute(
+            'src',
+            'https://img.pokemondb.net/sprites/ruby-sapphire/normal/unown-z.png'
+        )
+    })
+
+    it('falls back to a fixed unknown sprite for a non-letter search term', async () => {
+        const user = userEvent.setup()
+        mockPages({ [INITIAL_URL]: firstPage, [SEARCH_URL]: fullPage })
+        render(<PokeApp />)
+        await screen.findByRole('heading', { name: 'bulbasaur' })
+
+        await user.type(screen.getByRole('textbox'), '99')
+
+        expect(await screen.findByRole('heading', { name: 'Pokémon no encontrado' })).toBeInTheDocument()
+        expect(screen.getByRole('img', { name: 'icono de letra' })).toHaveAttribute(
+            'src',
+            'https://img.pokemondb.net/sprites/ruby-sapphire/normal/unown-a.png'
+        )
+    })
+
+    it('recovers after a failed request once the user retries', async () => {
+        const user = userEvent.setup()
+        mockApiFailure()
+        render(<PokeApp />)
+
+        expect(await screen.findByRole('heading', { name: /error en la conexión/i })).toBeInTheDocument()
+
+        mockPages({ [INITIAL_URL]: firstPage })
+        await user.click(screen.getByRole('button', { name: 'Reintentar' }))
+
+        expect(await screen.findByRole('heading', { name: 'bulbasaur' })).toBeInTheDocument()
+        expect(screen.queryByRole('alert')).not.toBeInTheDocument()
+    })
+
+    it('still responds to search after a failed request', async () => {
+        const user = userEvent.setup()
+        mockApiFailure()
+        render(<PokeApp />)
+        await screen.findByRole('heading', { name: /error en la conexión/i })
+
+        mockPages({ [SEARCH_URL]: fullPage })
+        await user.type(screen.getByRole('textbox'), 'pika')
+
+        expect(await screen.findByRole('heading', { name: 'pikachu' })).toBeInTheDocument()
+    })
+
+    it('loads the next page when the user clicks Página siguiente', async () => {
         const user = userEvent.setup()
         mockPages({ [INITIAL_URL]: firstPage, [NEXT_URL]: lastPage })
         render(<PokeApp />)
         await screen.findByRole('heading', { name: 'bulbasaur' })
 
-        await user.click(screen.getByRole('button', { name: 'Next Page' }))
+        await user.click(screen.getByRole('button', { name: 'Página siguiente' }))
 
         expect(await screen.findByRole('heading', { name: 'eevee' })).toBeInTheDocument()
         expect(axios.get).toHaveBeenCalledWith(NEXT_URL)
@@ -80,7 +136,7 @@ describe('PokeApp', () => {
         render(<PokeApp />)
         await screen.findByRole('heading', { name: 'bulbasaur' })
 
-        expect(screen.getByRole('button', { name: 'Previous Page' })).toHaveClass('inactive')
-        expect(screen.getByRole('button', { name: 'Next Page' })).not.toHaveClass('inactive')
+        expect(screen.getByRole('button', { name: 'Página anterior' })).toHaveClass('inactive')
+        expect(screen.getByRole('button', { name: 'Página siguiente' })).not.toHaveClass('inactive')
     })
 })
